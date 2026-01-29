@@ -11,6 +11,21 @@ interface AnalysisViewProps {
 export default function AnalysisView({ data }: AnalysisViewProps) {
   if (!data) return null;
 
+  // Resilience check: Ensure all required arrays and objects exist before destructuring
+  const isIncomplete = !data.porkBarrel || !data.lobbyistFingerprints || !data.contradictions || !data.economicImpact;
+  
+  if (isIncomplete) {
+    return (
+      <div className="p-8 border-2 border-dashed border-red-900/50 bg-red-950/10 rounded-lg text-center">
+        <ShieldAlert className="mx-auto text-red-500 mb-4" size={48} />
+        <h3 className="text-xl font-black uppercase text-red-500 mb-2">Data Incomplete</h3>
+        <p className="text-zinc-400 text-sm max-w-md mx-auto">
+          The forensic engine returned a partial payload. This usually happens when the AI is interrupted or fails to follow the schema strictly.
+        </p>
+      </div>
+    );
+  }
+
   const { porkBarrel, lobbyistFingerprints, contradictions, economicImpact, overallRiskScore } = data;
 
   const handleDownload = () => {

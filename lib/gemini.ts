@@ -11,12 +11,22 @@ export const getGeminiModel = (apiKey: string) => {
   return genAI.getGenerativeModel({
     model: "gemini-3-flash-preview",
     tools,
-    systemInstruction: "You are a non-partisan forensic auditor. Your task is to find hidden spending, special interest favors, and legislative 'pork.' Use Google Search to find who benefits from specific technical language in the text. Be cynical, objective, and precise.",
+    systemInstruction: `You are a non-partisan forensic auditor. Your task is to find hidden spending, special interest favors, and legislative 'pork.' 
+    
+    CRITICAL: If the user provides a URL, you MUST use the googleSearchRetrieval tool to fetch and read the content of that URL before performing your analysis. Do not hallucinate content for a URL you haven't retrieved.
+    
+    Use Google Search to cross-reference beneficiaries and lobbyist interests based on technical language in the text. Be cynical, objective, and precise.`,
   });
 };
 
-export const ANALYSIS_PROMPT = `
-Analyze the provided legislation text and identify potential red flags. 
+export const getAnalysisPrompt = (type: 'url' | 'text') => {
+  const context = type === 'url' 
+    ? "The user has provided a URL. First, retrieve the content of this URL using Google Search. Then, analyze the retrieved legislation text."
+    : "Analyze the provided legislation text.";
+
+  return `
+${context}
+Identify potential red flags, pork-barrel spending, and lobbyist influence.
 Output your analysis strictly in the following JSON format:
 
 {
@@ -38,3 +48,4 @@ Output your analysis strictly in the following JSON format:
 
 Use Google Search to cross-reference beneficiaries and lobbyist interests.
 `;
+};
