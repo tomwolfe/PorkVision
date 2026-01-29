@@ -6,6 +6,12 @@ import { AuditResult, AuditResultSchema } from "@/lib/schema";
 import { extractJson } from "@/lib/parser";
 import { ZodError } from "zod";
 
+const FORENSIC_ERRORS: Record<string, string> = {
+  "429": "Quota Exceeded",
+  "500": "AI Engine Malfunction",
+  "API_KEY_INVALID": "Authentication Failed",
+};
+
 export function useGemini() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AuditResult | null>(null);
@@ -23,41 +29,39 @@ export function useGemini() {
     setResult(null);
 
     const maxRetries = 2;
-    let attempt = 0;
-    let success = false;
     let useTools = true;
+    const isUrl = content.trim().startsWith("http");
 
-    while (attempt <= maxRetries && !success) {
+    const attemptAnalysis = async (attempt: number): Promise<void> => {
       try {
         const chat = getGeminiModel(apiKey, useTools);
         
-        const isUrl = content.trim().startsWith("http");
-        const prompt = `${getAnalysisPrompt(isUrl ? "url" : "text", useTools)}\n\nINPUT PAYLOAD:\n${content}`;
+        let prompt = `${getAnalysisPrompt(isUrl ? "url" : "text", useTools)}\n\nINPUT PAYLOAD:\n${content}`;
         
+        if (!useTools && isUrl) {
+          prompt = `CRITICAL NOTICE: Search capabilities are CURRENTLY UNAVAILABLE due to system quota limits. You MUST perform this forensic audit using only your internal knowledge base. Do not attempt to use tools.\n\n${prompt}`;
+        }
+
         const response = await chat.sendMessage({ message: prompt });
         const text = response.text || "";
         
         const validatedResult = extractJson(text, AuditResultSchema);
         setResult(validatedResult);
-        success = true;
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : String(err);
         const isQuotaError = errorMessage.includes("429") || errorMessage.toLowerCase().includes("quota");
 
-        // If we hit a quota error and we were using tools, try one last time without tools
         if (isQuotaError && useTools) {
           console.warn("Search tool quota exceeded. Falling back to base model analysis...");
           useTools = false;
-          // Don't increment attempt here, just retry immediately without tools
-          continue;
+          return attemptAnalysis(attempt); // Immediate retry with tools disabled
         }
 
         if (isQuotaError && attempt < maxRetries) {
-          attempt++;
-          const delay = Math.pow(2, attempt) * 1000;
-          console.warn(`Quota exceeded. Retrying in ${delay}ms... (Attempt ${attempt})`);
+          const delay = Math.pow(2, attempt + 1) * 1000;
+          console.warn(`Quota exceeded. Retrying in ${delay}ms... (Attempt ${attempt + 1})`);
           await new Promise(resolve => setTimeout(resolve, delay));
-          continue;
+          return attemptAnalysis(attempt + 1);
         }
 
         console.error("Forensic Audit Failure:", err);
@@ -67,20 +71,30 @@ export function useGemini() {
         } else if (err instanceof SyntaxError) {
           setError("AI output failed validation: Malformed Payload.");
         } else {
+          let mappedError = errorMessage;
+          
           if (errorMessage.includes("API_KEY_INVALID")) {
-            setError("Invalid API Key. Please check your credentials.");
+            mappedError = FORENSIC_ERRORS["API_KEY_INVALID"];
           } else if (isQuotaError) {
-            setError("Neural Link Congestion: You've exceeded your Gemini 3 Flash quota or Search Grounding limit. Try again in a few minutes or paste the RAW TEXT instead of a URL.");
-          } else if (errorMessage.includes("fetch failed") || (err instanceof Error && err.name === "TypeError")) {
-            setError("Network failure. Please check your internet connection.");
+            mappedError = FORENSIC_ERRORS["429"];
+          } else if (errorMessage.includes("500")) {
+            mappedError = FORENSIC_ERRORS["500"];
+          }
+
+          if (mappedError === errorMessage) {
+            if (errorMessage.includes("fetch failed") || (err instanceof Error && err.name === "TypeError")) {
+              setError("Network failure. Please check your internet connection.");
+            } else {
+              setError(errorMessage || "An error occurred during forensic analysis.");
+            }
           } else {
-            setError(errorMessage || "An error occurred during forensic analysis.");
+            setError(mappedError);
           }
         }
-        break; 
       }
-    }
+    };
 
+    await attemptAnalysis(0);
     setIsAnalyzing(false);
   };
 

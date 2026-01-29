@@ -15,30 +15,36 @@ export function extractJson<T>(text: string, schema: z.ZodType<T>): T {
     }
   }
 
-  // Attempt to find the first '{' and last '}' to isolate the JSON object
-  const firstBrace = cleaned.indexOf("{");
-  const lastBrace = cleaned.lastIndexOf("}");
-
-  if (firstBrace === -1 || lastBrace === -1) {
-    throw new Error("No JSON object found in AI response.");
+  // Attempt to find the outermost JSON structure using regex for better resilience against noise
+  const jsonRegex = /\{[\s\S]*\}/;
+  const match = cleaned.match(jsonRegex);
+  
+  if (!match) {
+    throw new Error("No valid JSON structure detected in AI response.");
   }
 
-  let jsonCandidate = cleaned.substring(firstBrace, lastBrace + 1);
+  let jsonCandidate = match[0];
 
   // Attempt to fix common AI artifacts like trailing commas before closing braces/brackets
   jsonCandidate = jsonCandidate
     .replace(/,\s*([}\]])/g, "$1")
-    // Fix potential multi-line string issues (though JSON.parse usually handles them if they are escaped)
     .trim();
 
   try {
     const parsed = JSON.parse(jsonCandidate);
-    return schema.parse(parsed);
-  } catch (err) {
-    if (err instanceof z.ZodError) {
-      throw err; // Let the caller handle ZodError specifically
+    try {
+      return schema.parse(parsed);
+    } catch (zodErr) {
+      if (zodErr instanceof z.ZodError) {
+        console.error("DEBUG: Zod Validation Failed. Detailed Paths:");
+        zodErr.issues.forEach(err => {
+          console.error(`- [${err.path.join(".") || "root"}]: ${err.message}`);
+        });
+        throw zodErr;
+      }
+      throw zodErr;
     }
-    
+  } catch (err) {
     // If it's a SyntaxError, try one more aggressive cleaning for trailing commas in nested structures
     if (err instanceof SyntaxError) {
         try {
