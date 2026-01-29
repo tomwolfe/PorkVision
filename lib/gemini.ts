@@ -1,27 +1,29 @@
 import { GoogleGenerativeAI, Tool } from "@google/generative-ai";
 
-export const getGeminiModel = (apiKey: string) => {
+export const getGeminiModel = (apiKey: string, useTools: boolean = true) => {
   const genAI = new GoogleGenerativeAI(apiKey);
-  const tools: Tool[] = [
+  const tools: any[] = useTools ? [
     {
-      googleSearchRetrieval: {},
+      googleSearch: {},
     },
-  ];
+  ] : [];
   
   return genAI.getGenerativeModel({
-    model: "gemini-3-flash-preview",
-    tools,
+    model: "gemini-2.5-flash",
+    tools: tools as Tool[],
     systemInstruction: `You are a non-partisan forensic auditor. Your task is to find hidden spending, special interest favors, and legislative 'pork.' 
     
-    CRITICAL: If the user provides a URL, you MUST use the googleSearchRetrieval tool to fetch and read the content of that URL before performing your analysis. Do not hallucinate content for a URL you haven't retrieved.
+    ${useTools ? "CRITICAL: If the user provides a URL, you MUST use the googleSearch tool to fetch and read the content of that URL before performing your analysis. Do not hallucinate content for a URL you haven't retrieved." : "Analyze the provided text directly."}
     
-    Use Google Search to cross-reference beneficiaries and lobbyist interests based on technical language in the text. Be cynical, objective, and precise.`,
+    Use your internal knowledge to cross-reference beneficiaries and lobbyist interests based on technical language in the text. Be cynical, objective, and precise.`,
   });
 };
 
-export const getAnalysisPrompt = (type: 'url' | 'text') => {
+export const getAnalysisPrompt = (type: 'url' | 'text', useTools: boolean = true) => {
   const context = type === 'url' 
-    ? "The user has provided a URL. First, retrieve the content of this URL using Google Search. Then, analyze the retrieved legislation text."
+    ? (useTools 
+        ? "The user has provided a URL. First, retrieve the content of this URL using Google Search. Then, analyze the retrieved legislation text."
+        : "The user has provided a URL, but Search Grounding is currently disabled. Try to analyze based on your training data or identify if you cannot proceed without the full text.")
     : "Analyze the provided legislation text.";
 
   return `
@@ -46,6 +48,6 @@ Output your analysis strictly in the following JSON format:
   "overallRiskScore": 0-100
 }
 
-Use Google Search to cross-reference beneficiaries and lobbyist interests.
+${useTools ? "Use Google Search to cross-reference beneficiaries and lobbyist interests." : "Use your internal knowledge to cross-reference beneficiaries and lobbyist interests."}
 `;
 };

@@ -25,14 +25,15 @@ export function useGemini() {
     const maxRetries = 2;
     let attempt = 0;
     let success = false;
+    let useTools = true;
 
     while (attempt <= maxRetries && !success) {
       try {
-        const model = getGeminiModel(apiKey);
+        const model = getGeminiModel(apiKey, useTools);
         const chat = model.startChat();
         
         const isUrl = content.trim().startsWith("http");
-        const prompt = `${getAnalysisPrompt(isUrl ? "url" : "text")}\n\nINPUT PAYLOAD:\n${content}`;
+        const prompt = `${getAnalysisPrompt(isUrl ? "url" : "text", useTools)}\n\nINPUT PAYLOAD:\n${content}`;
         
         const response = await chat.sendMessage(prompt);
         const text = response.response.text();
@@ -44,6 +45,14 @@ export function useGemini() {
         const errorMessage = err instanceof Error ? err.message : String(err);
         const isQuotaError = errorMessage.includes("429") || errorMessage.toLowerCase().includes("quota");
 
+        // If we hit a quota error and we were using tools, try one last time without tools
+        if (isQuotaError && useTools) {
+          console.warn("Search tool quota exceeded. Falling back to base model analysis...");
+          useTools = false;
+          // Don't increment attempt here, just retry immediately without tools
+          continue;
+        }
+
         if (isQuotaError && attempt < maxRetries) {
           attempt++;
           const delay = Math.pow(2, attempt) * 1000;
@@ -52,7 +61,7 @@ export function useGemini() {
           continue;
         }
 
-        console.error(err);
+        console.error("Forensic Audit Failure:", err);
         
         if (err instanceof ZodError) {
           setError("AI output failed validation: Schema Mismatch.");
@@ -62,14 +71,14 @@ export function useGemini() {
           if (errorMessage.includes("API_KEY_INVALID")) {
             setError("Invalid API Key. Please check your credentials.");
           } else if (isQuotaError) {
-            setError("Neural Link Congestion: You've exceeded your Gemini 3 Flash quota. This model has strict rate limits. Please check your billing plan at ai.google.dev or try again in a few minutes.");
+            setError("Neural Link Congestion: You've exceeded your Gemini 3 Flash quota or Search Grounding limit. Try again in a few minutes or paste the RAW TEXT instead of a URL.");
           } else if (errorMessage.includes("fetch failed") || (err instanceof Error && err.name === "TypeError")) {
             setError("Network failure. Please check your internet connection.");
           } else {
             setError(errorMessage || "An error occurred during forensic analysis.");
           }
         }
-        break; // Exit loop on non-quota error or after max retries
+        break; 
       }
     }
 
