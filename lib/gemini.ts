@@ -1,21 +1,22 @@
-import { GoogleGenerativeAI, Tool } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
 export const getGeminiModel = (apiKey: string, useTools: boolean = true) => {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  const tools: any[] = useTools ? [
-    {
-      googleSearch: {},
-    },
-  ] : [];
+  const client = new GoogleGenAI({ apiKey });
   
-  return genAI.getGenerativeModel({
+  return client.chats.create({
     model: "gemini-2.5-flash",
-    tools: tools as Tool[],
-    systemInstruction: `You are a non-partisan forensic auditor. Your task is to find hidden spending, special interest favors, and legislative 'pork.' 
+    config: {
+      tools: useTools ? [
+        {
+          googleSearch: {},
+        },
+      ] : [],
+      systemInstruction: `You are a non-partisan forensic auditor. Your task is to find hidden spending, special interest favors, and legislative 'pork.' 
     
     ${useTools ? "CRITICAL: If the user provides a URL, you MUST use the googleSearch tool to fetch and read the content of that URL before performing your analysis. Do not hallucinate content for a URL you haven't retrieved." : "Analyze the provided text directly."}
     
     Use your internal knowledge to cross-reference beneficiaries and lobbyist interests based on technical language in the text. Be cynical, objective, and precise.`,
+    }
   });
 };
 

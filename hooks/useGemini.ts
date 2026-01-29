@@ -29,14 +29,13 @@ export function useGemini() {
 
     while (attempt <= maxRetries && !success) {
       try {
-        const model = getGeminiModel(apiKey, useTools);
-        const chat = model.startChat();
+        const chat = getGeminiModel(apiKey, useTools);
         
         const isUrl = content.trim().startsWith("http");
         const prompt = `${getAnalysisPrompt(isUrl ? "url" : "text", useTools)}\n\nINPUT PAYLOAD:\n${content}`;
         
-        const response = await chat.sendMessage(prompt);
-        const text = response.response.text();
+        const response = await chat.sendMessage({ message: prompt });
+        const text = response.text || "";
         
         const validatedResult = extractJson(text, AuditResultSchema);
         setResult(validatedResult);
