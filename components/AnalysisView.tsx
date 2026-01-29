@@ -1,16 +1,29 @@
 "use client";
 
 import RedFlagCard from "./RedFlagCard";
-import { ShieldAlert, BarChart3, Target, Zap, History as HistoryIcon } from "lucide-react";
+import { ShieldAlert, BarChart3, Target, Zap, History as HistoryIcon, Download } from "lucide-react";
+import { AuditResult } from "@/lib/schema";
 
 interface AnalysisViewProps {
-  data: any;
+  data: AuditResult;
 }
 
 export default function AnalysisView({ data }: AnalysisViewProps) {
   if (!data) return null;
 
   const { porkBarrel, lobbyistFingerprints, contradictions, economicImpact, overallRiskScore } = data;
+
+  const handleDownload = () => {
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `porkvision-audit-${new Date().toISOString().split('T')[0]}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-12 animate-in fade-in duration-700">
@@ -25,7 +38,7 @@ export default function AnalysisView({ data }: AnalysisViewProps) {
             {overallRiskScore}%
           </div>
           <div className="mt-4 text-[10px] font-bold text-red-900 bg-red-500/10 py-1 rounded-full uppercase">
-            Critical Concern
+            {overallRiskScore > 70 ? "Critical Concern" : overallRiskScore > 40 ? "Moderate Concern" : "Low Concern"}
           </div>
         </div>
 
@@ -58,7 +71,7 @@ export default function AnalysisView({ data }: AnalysisViewProps) {
             </h2>
           </div>
           <div className="space-y-4">
-            {porkBarrel.map((item: any, i: number) => (
+            {porkBarrel.map((item, i) => (
               <RedFlagCard
                 key={i}
                 type="pork"
@@ -79,7 +92,7 @@ export default function AnalysisView({ data }: AnalysisViewProps) {
             </h2>
           </div>
           <div className="space-y-4">
-            {lobbyistFingerprints.map((item: any, i: number) => (
+            {lobbyistFingerprints.map((item, i) => (
               <RedFlagCard
                 key={i}
                 type="lobbyist"
@@ -101,7 +114,7 @@ export default function AnalysisView({ data }: AnalysisViewProps) {
             </h2>
           </div>
           <div className="space-y-4">
-            {contradictions.map((item: any, i: number) => (
+            {contradictions.map((item, i) => (
               <RedFlagCard
                 key={i}
                 type="contradiction"
@@ -129,8 +142,12 @@ export default function AnalysisView({ data }: AnalysisViewProps) {
               <p className="text-zinc-400">{`> [COMPLETED] Forensic audit finalized.`}</p>
             </div>
           </div>
-          <button className="mt-8 w-full border border-zinc-700 hover:border-zinc-500 py-3 text-xs font-bold uppercase tracking-widest transition-all">
-            Download Audit Report (PDF)
+          <button 
+            onClick={handleDownload}
+            className="mt-8 w-full border border-zinc-700 hover:border-zinc-500 py-3 text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2"
+          >
+            <Download size={14} />
+            Download Audit Report (JSON)
           </button>
         </section>
       </div>

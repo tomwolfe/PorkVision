@@ -1,15 +1,16 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, Tool } from "@google/generative-ai";
 
 export const getGeminiModel = (apiKey: string) => {
   const genAI = new GoogleGenerativeAI(apiKey);
+  const tools: Tool[] = [
+    {
+      googleSearchRetrieval: {},
+    },
+  ];
+  
   return genAI.getGenerativeModel({
     model: "gemini-3-flash-preview",
-    tools: [
-      {
-        // @ts-ignore
-        googleSearchRetrieval: {},
-      },
-    ],
+    tools,
     systemInstruction: "You are a non-partisan forensic auditor. Your task is to find hidden spending, special interest favors, and legislative 'pork.' Use Google Search to find who benefits from specific technical language in the text. Be cynical, objective, and precise.",
   });
 };
