@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { getGeminiModel, getAnalysisPrompt } from "@/lib/gemini";
 import { AuditResult, AuditResultSchema } from "@/lib/schema";
+import { extractJson } from "@/lib/parser";
 import { ZodError } from "zod";
 
 const FORENSIC_ERRORS: Record<string, string> = {
@@ -47,7 +48,7 @@ export function useGemini() {
         }
 
         const response = await chat.sendMessage({ message: prompt });
-        const validatedResult = AuditResultSchema.parse(JSON.parse(response.text || "{}"));
+        const validatedResult = extractJson(response.text || "{}", AuditResultSchema);
         setResult(validatedResult);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : String(err);
