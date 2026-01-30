@@ -16,6 +16,65 @@ export const getGeminiModel = (apiKey: string, useTools: boolean = true) => {
     ${useTools ? "CRITICAL: If the user provides a URL, you MUST use the googleSearch tool to fetch and read the content of that URL before performing your analysis. Do not hallucinate content for a URL you haven't retrieved." : "Analyze the provided text directly."}
     
     Use your internal knowledge to cross-reference beneficiaries and lobbyist interests based on technical language in the text. Be cynical, objective, and precise.`,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: "object",
+        properties: {
+          porkBarrel: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                item: { type: "string" },
+                reason: { type: "string" },
+                risk: { type: "string", enum: ["low", "medium", "high"] },
+              },
+              required: ["item", "reason", "risk"],
+            },
+          },
+          lobbyistFingerprints: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                clause: { type: "string" },
+                beneficiary: { type: "string" },
+                evidence: { type: "string" },
+              },
+              required: ["clause", "beneficiary", "evidence"],
+            },
+          },
+          contradictions: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                statement: { type: "string" },
+                contradicts: { type: "string" },
+                source: { type: "string" },
+              },
+              required: ["statement", "contradicts", "source"],
+            },
+          },
+                      economicImpact: {
+                        type: "object",
+                        properties: {
+                          debtImpact: { type: "string" },
+                          longTermOutlook: { type: "string" },
+                        },
+                        required: ["debtImpact", "longTermOutlook"],
+                      },
+                      overallRiskScore: { type: "number", minimum: 0, maximum: 100 },
+                      summary: { type: "string" },
+                    },        required: [
+          "porkBarrel",
+          "lobbyistFingerprints",
+          "contradictions",
+          "economicImpact",
+          "overallRiskScore",
+          "summary",
+        ],
+      },
     }
   });
 };
@@ -46,7 +105,8 @@ Output your analysis strictly in the following JSON format:
     "debtImpact": "string",
     "longTermOutlook": "string"
   },
-  "overallRiskScore": 0-100
+  "overallRiskScore": 0-100,
+  "summary": "2-3 sentence high-level overview of the audit findings"
 }
 
 ${useTools ? "Use Google Search to cross-reference beneficiaries and lobbyist interests." : "Use your internal knowledge to cross-reference beneficiaries and lobbyist interests."}

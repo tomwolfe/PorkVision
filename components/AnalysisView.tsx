@@ -60,6 +60,13 @@ export default function AnalysisView({ data }: AnalysisViewProps) {
         </div>
       </div>
 
+      {/* Executive Summary */}
+      <div className="max-w-4xl">
+        <p className="text-zinc-400 italic leading-relaxed">
+          {data.summary}
+        </p>
+      </div>
+
       {/* Main Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
         {/* Pork Barrel Section */}

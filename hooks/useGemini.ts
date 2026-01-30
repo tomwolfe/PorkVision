@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { getGeminiModel, getAnalysisPrompt } from "@/lib/gemini";
 import { AuditResult, AuditResultSchema } from "@/lib/schema";
-import { extractJson } from "@/lib/parser";
 import { ZodError } from "zod";
 
 const FORENSIC_ERRORS: Record<string, string> = {
@@ -21,6 +20,11 @@ export function useGemini() {
     const apiKey = localStorage.getItem("gemini_api_key");
     if (!apiKey) {
       setError("API Key missing. Please set your API key in the settings.");
+      return;
+    }
+
+    if (!apiKey.startsWith("AIza")) {
+      setError("Invalid API Key format detected.");
       return;
     }
 
@@ -43,9 +47,7 @@ export function useGemini() {
         }
 
         const response = await chat.sendMessage({ message: prompt });
-        const text = response.text || "";
-        
-        const validatedResult = extractJson(text, AuditResultSchema);
+        const validatedResult = AuditResultSchema.parse(JSON.parse(response.text || "{}"));
         setResult(validatedResult);
       } catch (err: unknown) {
         const errorMessage = err instanceof Error ? err.message : String(err);

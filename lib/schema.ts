@@ -27,6 +27,7 @@ export const AuditResultSchema = z.object({
     longTermOutlook: z.string(),
   }),
   overallRiskScore: z.number().min(0).max(100),
+  summary: z.string(),
 });
 
 export type AuditResult = z.infer<typeof AuditResultSchema>;
