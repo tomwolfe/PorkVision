@@ -2,7 +2,7 @@
 
 **Audit government legislation with AI. Expose hidden spending and lobbyist influence.**
 
-PorkVision is a browser-based forensic auditor that uses Google's Gemini 2.5 Flash AI to analyze bills and legislation, identifying potential "pork barrel" spending, lobbyist fingerprints, and policy contradictions. It leverages real-time Google Search grounding to cross-reference bill language with public records and corporate donor data.
+PorkVision is a browser-based forensic auditor that uses Google's Gemini 3 Flash AI to analyze bills and legislation, identifying potential "pork barrel" spending, lobbyist fingerprints, and policy contradictions. It leverages real-time Google Search grounding to cross-reference bill language with public records and corporate donor data.
 
 ## Overview
 
@@ -12,7 +12,7 @@ The tool operates entirely client-side. Your Google API key is stored only in yo
 
 ## Features
 
-*   **AI-Powered Forensic Analysis:** Uses Gemini 2.5 Flash to identify pork-barrel spending, lobbyist language, and policy contradictions.
+*   **AI-Powered Forensic Analysis:** Uses Gemini 3 Flash to identify pork-barrel spending, lobbyist language, and policy contradictions.
 *   **Real-Time Grounding:** Integrates with Google Search to verify claims and cross-reference beneficiaries with public data.
 *   **Client-Side Security:** Your API key is stored locally in your browser. No data is sent to external servers.
 *   **Comprehensive Audit Report:** Generates a detailed JSON report with risk scores, summaries, and evidence.
@@ -36,7 +36,7 @@ The tool operates entirely client-side. Your Google API key is stored only in yo
 ### Prerequisites
 
 *   A Google Cloud Platform account with the **Generative AI API** enabled.
-*   An API key for the **Gemini 2.5 Flash** model.
+*   An API key for the **Gemini 3 Flash** model.
 
 ### Setup
 
@@ -72,7 +72,7 @@ The tool operates entirely client-side. Your Google API key is stored only in yo
 ## Technologies Used
 
 *   **Frontend:** Next.js 16 (React 19), Tailwind CSS 4, TypeScript
-*   **AI:** Google Generative AI (Gemini 2.5 Flash)
+*   **AI:** Google Generative AI (Gemini 3 Flash)
 *   **State & Validation:** Zod, Zustand (via custom hook)
 *   **Testing:** Vitest, @testing-library/react, jsdom
 *   **Styling:** Tailwind CSS, Tailwind CSS Animate
