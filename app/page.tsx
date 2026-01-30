@@ -1,15 +1,25 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import ApiKeyInput from "@/components/ApiKeyInput";
 import BillUploader from "@/components/BillUploader";
 import AnalysisView from "@/components/AnalysisView";
 import { useGemini } from "@/hooks/useGemini";
-import { Search, ShieldCheck, Cpu, Terminal } from "lucide-react";
+import { Search, ShieldCheck, Cpu, Terminal, Circle } from "lucide-react";
 
 export default function Home() {
   const { analyze, isAnalyzing, result, error } = useGemini();
   const [showKeyInput, setShowKeyInput] = useState(false);
+  const [hasApiKey, setHasApiKey] = useState(false);
+
+  const checkApiKey = useCallback(() => {
+    const key = localStorage.getItem("gemini_api_key");
+    setHasApiKey(!!key && key.trim().length > 0);
+  }, []);
+
+  useEffect(() => {
+    checkApiKey();
+  }, [checkApiKey]);
 
   return (
     <main className="min-h-screen bg-black text-zinc-100 selection:bg-red-500/30">
@@ -40,7 +50,7 @@ export default function Home() {
               onClick={() => setShowKeyInput(!showKeyInput)}
               className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all"
             >
-              <Cpu size={14} className="text-amber-500" />
+              <Cpu size={14} className={hasApiKey ? "text-emerald-500 animate-pulse" : "text-zinc-600"} />
               Neural Link
             </button>
           </div>
@@ -58,7 +68,7 @@ export default function Home() {
               >
                 Close Terminal
               </button>
-              <ApiKeyInput />
+              <ApiKeyInput onStatusChange={checkApiKey} />
             </div>
           </div>
         )}
@@ -81,8 +91,13 @@ export default function Home() {
         )}
 
         <section className={result ? "mt-4" : ""}>
-          {!result && <BillUploader onAnalyze={analyze} isAnalyzing={isAnalyzing} />}
-          
+          {!result && (
+            <BillUploader 
+              onAnalyze={analyze} 
+              isAnalyzing={isAnalyzing} 
+              hasApiKey={hasApiKey}
+            />
+          )}          
           {error && (
             <div className="mt-8 p-4 bg-red-900/20 border border-red-900 text-red-500 rounded flex items-center gap-3 font-bold uppercase text-xs tracking-widest max-w-4xl mx-auto">
               <Search size={16} />

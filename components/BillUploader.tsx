@@ -6,14 +6,15 @@ import { Upload, Link as LinkIcon, FileText, Search } from "lucide-react";
 interface BillUploaderProps {
   onAnalyze: (content: string) => void;
   isAnalyzing: boolean;
+  hasApiKey: boolean;
 }
 
-export default function BillUploader({ onAnalyze, isAnalyzing }: BillUploaderProps) {
+export default function BillUploader({ onAnalyze, isAnalyzing, hasApiKey }: BillUploaderProps) {
   const [inputType, setInputType] = useState<"url" | "text">("url");
   const [value, setValue] = useState("");
 
   const handleSubmit = () => {
-    if (!value.trim()) return;
+    if (!value.trim() || !hasApiKey) return;
     onAnalyze(value);
   };
 
@@ -25,7 +26,7 @@ export default function BillUploader({ onAnalyze, isAnalyzing }: BillUploaderPro
             Legislation Ingestor
           </h2>
           <p className="text-zinc-500 text-xs font-mono uppercase">
-            Status: Ready for deployment
+            Status: {hasApiKey ? "Ready for deployment" : "Connection Offline"}
           </p>
         </div>
         <div className="flex bg-black p-1 rounded border border-zinc-800">
@@ -69,27 +70,35 @@ export default function BillUploader({ onAnalyze, isAnalyzing }: BillUploaderPro
           />
         )}
 
-        <button
-          onClick={handleSubmit}
-          disabled={isAnalyzing || !value.trim()}
-          className={`w-full py-4 rounded font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${
-            isAnalyzing
-              ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
-              : "bg-red-700 hover:bg-red-600 text-white shadow-[0_0_20px_rgba(185,28,28,0.4)] active:scale-[0.98]"
-          }`}
-        >
-          {isAnalyzing ? (
-            <>
-              <div className="w-5 h-5 border-2 border-zinc-600 border-t-white rounded-full animate-spin" />
-              Processing Manifest...
-            </>
-          ) : (
-            <>
-              <Search size={20} />
-              Execute Forensic Audit
-            </>
+        <div className="space-y-3">
+          <button
+            onClick={handleSubmit}
+            disabled={isAnalyzing || !value.trim() || !hasApiKey}
+            className={`w-full py-4 rounded font-black uppercase tracking-widest flex items-center justify-center gap-3 transition-all ${
+              isAnalyzing || !hasApiKey
+                ? "bg-zinc-800 text-zinc-600 cursor-not-allowed"
+                : "bg-red-700 hover:bg-red-600 text-white shadow-[0_0_20px_rgba(185,28,28,0.4)] active:scale-[0.98]"
+            }`}
+          >
+            {isAnalyzing ? (
+              <>
+                <div className="w-5 h-5 border-2 border-zinc-600 border-t-white rounded-full animate-spin" />
+                Processing Manifest...
+              </>
+            ) : (
+              <>
+                <Search size={20} />
+                Execute Forensic Audit
+              </>
+            )}
+          </button>
+          
+          {!hasApiKey && (
+            <p className="text-red-500 text-[10px] font-black uppercase tracking-widest text-center animate-pulse">
+              SYSTEM OFFLINE: NEURAL LINK REQUIRED
+            </p>
           )}
-        </button>
+        </div>
       </div>
     </div>
   );

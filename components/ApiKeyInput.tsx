@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Key, Save, AlertCircle } from "lucide-react";
+import { Key, Save, PowerOff } from "lucide-react";
 
-export default function ApiKeyInput() {
+interface ApiKeyInputProps {
+  onStatusChange?: () => void;
+}
+
+export default function ApiKeyInput({ onStatusChange }: ApiKeyInputProps) {
   const [apiKey, setApiKey] = useState("");
   const [isVisible, setIsVisible] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
@@ -19,7 +23,14 @@ export default function ApiKeyInput() {
   const handleSave = () => {
     localStorage.setItem("gemini_api_key", apiKey);
     setIsSaved(true);
-    // Notify user or close modal
+    if (onStatusChange) onStatusChange();
+  };
+
+  const handleClear = () => {
+    localStorage.removeItem("gemini_api_key");
+    setApiKey("");
+    setIsSaved(false);
+    if (onStatusChange) onStatusChange();
   };
 
   return (
@@ -49,14 +60,26 @@ export default function ApiKeyInput() {
           {isVisible ? "HIDE" : "SHOW"}
         </button>
       </div>
-      <div className="flex gap-4 mt-6">
-        <button
-          onClick={handleSave}
-          className="flex-1 bg-amber-600 hover:bg-amber-500 text-black font-black py-3 rounded flex items-center justify-center gap-2 transition-all active:scale-95"
-        >
-          <Save size={18} />
-          {isSaved ? "UPDATE CONNECTION" : "INITIALIZE"}
-        </button>
+      <div className="flex flex-col gap-3 mt-6">
+        <div className="flex gap-4">
+          <button
+            onClick={handleSave}
+            className="flex-1 bg-amber-600 hover:bg-amber-500 text-black font-black py-3 rounded flex items-center justify-center gap-2 transition-all active:scale-95"
+          >
+            <Save size={18} />
+            {isSaved ? "UPDATE CONNECTION" : "INITIALIZE"}
+          </button>
+        </div>
+        
+        {isSaved && (
+          <button
+            onClick={handleClear}
+            className="w-full bg-transparent hover:bg-red-950/30 border border-red-900/50 text-red-500 font-bold py-2 rounded flex items-center justify-center gap-2 transition-all text-[10px] uppercase tracking-widest"
+          >
+            <PowerOff size={14} />
+            Clear Connection
+          </button>
+        )}
       </div>
       {isSaved && (
         <div className="mt-4 flex items-center gap-2 text-green-500 text-xs font-bold uppercase">
