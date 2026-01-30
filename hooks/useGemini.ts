@@ -24,8 +24,15 @@ export function useGemini() {
       return;
     }
 
+    // Pre-flight API key validation
     if (!apiKey.startsWith("AIza")) {
-      setError("Invalid API Key format detected.");
+      setError("Invalid Key Format: API key must start with 'AIza'.");
+      return;
+    }
+
+    // Additional validation: Check for minimum length (Google API keys are typically 39 chars)
+    if (apiKey.length < 39) {
+      setError("Invalid Key Format: API key appears to be too short.");
       return;
     }
 
