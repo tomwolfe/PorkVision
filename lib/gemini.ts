@@ -4,7 +4,7 @@ export const getGeminiModel = (apiKey: string, useTools: boolean = true) => {
   const client = new GoogleGenAI({ apiKey });
   
   return client.chats.create({
-    model: "gemini-2.5-flash",
+    model: "gemini-3-flash-preview",
     config: {
       tools: useTools ? [
         {
