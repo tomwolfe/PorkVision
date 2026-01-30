@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Key, Save, PowerOff } from "lucide-react";
+import { validateApiKey } from "@/hooks/useGemini";
 
 interface ApiKeyInputProps {
   onStatusChange?: () => void;
@@ -20,10 +21,22 @@ export default function ApiKeyInput({ onStatusChange }: ApiKeyInputProps) {
     }
   }, []);
 
-  const handleSave = () => {
-    localStorage.setItem("gemini_api_key", apiKey);
-    setIsSaved(true);
-    if (onStatusChange) onStatusChange();
+  const handleSave = async () => {
+    if (!apiKey) {
+      return;
+    }
+
+    try {
+      // Validate the API key before saving
+      await validateApiKey(apiKey);
+
+      localStorage.setItem("gemini_api_key", apiKey);
+      setIsSaved(true);
+      if (onStatusChange) onStatusChange();
+    } catch (err: unknown) {
+      console.error("API Key validation failed:", err);
+      alert(err instanceof Error ? err.message : "Invalid API key: Key rejected by Google");
+    }
   };
 
   const handleClear = () => {
@@ -63,7 +76,9 @@ export default function ApiKeyInput({ onStatusChange }: ApiKeyInputProps) {
       <div className="flex flex-col gap-3 mt-6">
         <div className="flex gap-4">
           <button
-            onClick={handleSave}
+            onClick={async () => {
+              await handleSave();
+            }}
             className="flex-1 bg-amber-600 hover:bg-amber-500 text-black font-black py-3 rounded flex items-center justify-center gap-2 transition-all active:scale-95"
           >
             <Save size={18} />

@@ -5,7 +5,10 @@ import { z } from "zod";
  * Handles markdown backticks, conversational preamble, and common syntax errors.
  */
 export function extractJson<T>(text: string, schema: z.ZodType<T>): T {
-  let cleaned = text.trim();
+  // Sanitize non-printable ASCII characters (0-31) that occasionally appear in LLM streams
+  let sanitizedText = text.replace(/[\x00-\x1F\x7F]/g, '');
+
+  let cleaned = sanitizedText.trim();
 
   // Remove markdown code blocks if present
   if (cleaned.includes("```")) {
@@ -15,15 +18,36 @@ export function extractJson<T>(text: string, schema: z.ZodType<T>): T {
     }
   }
 
-  // Attempt to find the outermost JSON structure using regex for better resilience against noise
-  const jsonRegex = /\{[\s\S]*\}/;
-  const match = cleaned.match(jsonRegex);
-  
-  if (!match) {
+  // Find all JSON structures using a character-by-character approach to handle nested braces properly
+  const matches: string[] = [];
+  let braceCount = 0;
+  let startIdx = -1;
+
+  for (let i = 0; i < cleaned.length; i++) {
+    if (cleaned[i] === '{') {
+      if (braceCount === 0) {
+        startIdx = i; // Start of a potential JSON object
+      }
+      braceCount++;
+    } else if (cleaned[i] === '}') {
+      braceCount--;
+      if (braceCount === 0 && startIdx !== -1) {
+        // Found a complete JSON object
+        matches.push(cleaned.substring(startIdx, i + 1));
+      }
+    }
+  }
+
+  if (matches.length === 0) {
     throw new Error("No valid JSON structure detected in AI response.");
   }
 
-  let jsonCandidate = match[0];
+  // If multiple matches exist, attempt to parse the one with the greatest string length
+  let jsonCandidate = matches.length === 1
+    ? matches[0]
+    : matches.reduce((longest, current) =>
+      current.length > longest.length ? current : longest
+    );
 
   // Attempt to fix common AI artifacts like trailing commas before closing braces/brackets
   jsonCandidate = jsonCandidate
@@ -56,7 +80,7 @@ export function extractJson<T>(text: string, schema: z.ZodType<T>): T {
             throw err; // Throw original SyntaxError if aggressive cleaning fails
         }
     }
-    
+
     throw err;
   }
 }

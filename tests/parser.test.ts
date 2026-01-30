@@ -194,7 +194,24 @@ Please review the data carefully.`;
   it('should handle JSON with mixed quote types (single and double)', () => {
     // Note: This test expects failure since JSON only allows double quotes
     const input = `{"name": 'Jack', "age": 50}`;
-    
+
     expect(() => extractJson<TestType>(input, TestSchema)).toThrow(SyntaxError);
+  });
+
+  it('should correctly extract the largest valid JSON object when multiple exist', () => {
+    // Input contains two JSON objects that match TestSchema - a small one and a larger one with additional fields
+    // The parser should select the larger one based on string length
+    const input = `{"name": "Small", "age": 20} {"name": "Larger", "age": 25, "email": "larger@example.com"}`;
+
+    const result = extractJson(input, TestSchema);
+
+    // Should pick the larger JSON object (with email field) even though email is optional in TestSchema
+    // The parsed result will include the email field if it's valid, but TestSchema only validates name and age
+    // Since email is optional in TestSchema, it should be included in the parsed result
+    expect(result).toEqual({
+      name: "Larger",
+      age: 25,
+      email: "larger@example.com"
+    });
   });
 });

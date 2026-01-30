@@ -12,6 +12,20 @@ const FORENSIC_ERRORS: Record<string, string> = {
   "API_KEY_INVALID": "Authentication Failed",
 };
 
+export async function validateApiKey(key: string): Promise<boolean> {
+  try {
+    const chat = getGeminiModel(key, false); // Disable tools for validation
+    const response = await chat.sendMessage({ message: 'ping' });
+    return !!response.text;
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    if (errorMessage.includes("API_KEY_INVALID") || errorMessage.includes("400") || errorMessage.includes("403")) {
+      throw new Error("Invalid API key: Key rejected by Google");
+    }
+    throw err;
+  }
+}
+
 export function useGemini() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [result, setResult] = useState<AuditResult | null>(null);
