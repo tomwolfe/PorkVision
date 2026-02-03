@@ -13,6 +13,8 @@ export const AuditResultSchema = z.object({
       clause: z.string(),
       beneficiary: z.string(),
       evidence: z.string(),
+      similarityScore: z.number().min(0).max(100),
+      sourceModelLegislation: z.string().optional(),
     })
   ),
   contradictions: z.array(
@@ -25,6 +27,14 @@ export const AuditResultSchema = z.object({
   economicImpact: z.object({
     debtImpact: z.string(),
     longTermOutlook: z.string(),
+    redFlags: z.array(
+      z.object({
+        type: z.string(),
+        description: z.string(),
+        severity: z.enum(["low", "medium", "high"]),
+        triggerClause: z.string(),
+      })
+    ).optional(),
   }),
   overallRiskScore: z.number().min(0).max(100),
   summary: z.string(),
