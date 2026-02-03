@@ -1,8 +1,10 @@
 "use client";
 
 import RedFlagCard from "./RedFlagCard";
-import { ShieldAlert, BarChart3, Target, Zap, History as HistoryIcon, Download } from "lucide-react";
+import { ShieldAlert, BarChart3, Target, Zap, History as HistoryIcon, Download, MapPin, Scale } from "lucide-react";
 import { AuditResult } from "@/lib/schema";
+import { BillDiffViewer } from "./BillDiffViewer";
+import { SocialProofGenerator } from "./SocialProofGenerator";
 
 interface AnalysisViewProps {
   data: AuditResult;
@@ -11,7 +13,7 @@ interface AnalysisViewProps {
 export default function AnalysisView({ data }: AnalysisViewProps) {
   if (!data) return null;
 
-  const { porkBarrel, lobbyistFingerprints, contradictions, economicImpact, overallRiskScore } = data;
+  const { porkBarrel, lobbyistFingerprints, contradictions, economicImpact, overallRiskScore, localImpact, porkPercentage } = data;
 
   const handleDownload = () => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
@@ -32,37 +34,85 @@ export default function AnalysisView({ data }: AnalysisViewProps) {
         <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-lg text-center relative overflow-hidden group">
           <div className="absolute top-0 left-0 w-full h-1 bg-red-600" />
           <span className="text-[10px] font-black text-zinc-500 uppercase tracking-widest block mb-2">
-            Threat Level
+            Pork Percentage
           </span>
           <div className="text-5xl font-black text-red-500 font-mono italic">
-            {overallRiskScore}%
+            {porkPercentage}%
           </div>
           <div className="mt-4 text-[10px] font-bold text-red-900 bg-red-500/10 py-1 rounded-full uppercase">
-            {overallRiskScore > 70 ? "Critical Concern" : overallRiskScore > 40 ? "Moderate Concern" : "Low Concern"}
+            {porkPercentage > 50 ? "High Special Interest Capture" : "Low Special Interest Capture"}
           </div>
         </div>
 
         <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-lg col-span-1 md:col-span-3">
           <div className="flex items-center gap-3 mb-4">
             <BarChart3 className="text-emerald-500" size={20} />
-            <h3 className="font-bold uppercase tracking-tight text-white">Economic Projection</h3>
+            <h3 className="font-bold uppercase tracking-tight text-white">Forensic Overview</h3>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div>
               <span className="text-[10px] font-black text-zinc-500 uppercase block mb-1">Debt Impact</span>
               <p className="text-zinc-300 text-sm leading-relaxed">{economicImpact.debtImpact}</p>
             </div>
             <div>
-              <span className="text-[10px] font-black text-zinc-500 uppercase block mb-1">Long-term Outlook</span>
-              <p className="text-zinc-300 text-sm leading-relaxed">{economicImpact.longTermOutlook}</p>
+              <span className="text-[10px] font-black text-zinc-500 uppercase block mb-1">Risk Score</span>
+              <p className="text-zinc-300 text-sm leading-relaxed">{overallRiskScore}/100 Forensic Risk</p>
+            </div>
+            <div>
+              <span className="text-[10px] font-black text-zinc-500 uppercase block mb-1">Local Focus</span>
+              <p className="text-zinc-300 text-sm leading-relaxed">{localImpact?.cityCounty || "General Jurisdiction"}</p>
             </div>
           </div>
         </div>
       </div>
 
+      {/* Local Impact & Social Proof Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="lg:col-span-2 space-y-6">
+          <div className="flex items-center gap-3 mb-2 border-b border-zinc-800 pb-4">
+            <MapPin className="text-blue-500" size={20} />
+            <h2 className="text-xl font-black uppercase tracking-tighter text-white">
+              Local Accountability Report
+            </h2>
+          </div>
+          {localImpact ? (
+            <div className="bg-zinc-900/50 border border-zinc-800 p-6 rounded-lg space-y-4">
+              <div>
+                <h4 className="text-[10px] font-black uppercase text-zinc-500 mb-1">Affected Demographics</h4>
+                <p className="text-zinc-200 text-sm">{localImpact.affectedDemographics}</p>
+              </div>
+              <div>
+                <h4 className="text-[10px] font-black uppercase text-zinc-500 mb-1">Regulatory Shift</h4>
+                <p className="text-zinc-200 text-sm">{localImpact.regulatoryShift}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-zinc-600 text-xs italic">No local impact data available for this audit level.</div>
+          )}
+          
+          {localImpact?.regulatoryDiff && (
+            <div className="mt-6">
+               <div className="flex items-center gap-3 mb-4">
+                <Scale className="text-emerald-500" size={18} />
+                <h3 className="text-sm font-bold uppercase tracking-widest text-zinc-300">Plain English Audit Diff</h3>
+              </div>
+              <BillDiffViewer diffs={localImpact.regulatoryDiff} />
+            </div>
+          )}
+        </div>
+        
+        <div className="bg-zinc-900/30 border border-zinc-800 p-6 rounded-lg">
+          <SocialProofGenerator 
+            porkPercentage={porkPercentage} 
+            billName={localImpact?.cityCounty ? `${localImpact.cityCounty} Legislation` : "Proposed Bill"} 
+          />
+        </div>
+      </div>
+
       {/* Executive Summary */}
-      <div className="max-w-4xl">
-        <p className="text-zinc-400 italic leading-relaxed">
+      <div className="max-w-4xl bg-zinc-900/20 border-l-2 border-red-600 p-6">
+        <h4 className="text-[10px] font-black uppercase text-red-600 mb-2 tracking-[0.2em]">Forensic Auditor's Summary</h4>
+        <p className="text-zinc-300 font-medium leading-relaxed">
           {data.summary}
         </p>
       </div>
@@ -105,8 +155,8 @@ export default function AnalysisView({ data }: AnalysisViewProps) {
                 type="lobbyist"
                 title={item.clause}
                 beneficiary={item.beneficiary}
-                description={`Evidence suggests this language mirrors industry-specific requests.`}
-                evidence={item.evidence}
+                description={`Evidence: ${item.evidence}`}
+                evidence={item.donorCorrelation ? `Donor Correlation: ${item.donorCorrelation.donorName} (${item.donorCorrelation.contributionAmount || "amount unknown"}). Match: "${item.donorCorrelation.statementMatch}"` : undefined}
               />
             ))}
           </div>

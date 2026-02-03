@@ -31,7 +31,7 @@ export function useGemini() {
   const [result, setResult] = useState<AuditResult | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const analyze = async (content: string) => {
+  const analyze = async (content: string, comparisonContent?: string, level: 'local' | 'state' = 'local') => {
     const apiKey = localStorage.getItem("gemini_api_key");
     if (!apiKey) {
       setError("API Key missing. Please set your API key in the settings.");
@@ -62,7 +62,12 @@ export function useGemini() {
       try {
         const chat = getGeminiModel(apiKey, useTools);
         
-        let prompt = `${getAnalysisPrompt(isUrl ? "url" : "text", useTools)}\n\nINPUT PAYLOAD:\n${content}`;
+        let payload = content;
+        if (comparisonContent) {
+          payload = `VERSION A (CURRENT):\n${content}\n\nVERSION B (PREVIOUS/COMPARISON):\n${comparisonContent}\n\nPlease compare these two versions and focus on regulatory shifts and penalty changes in your analysis.`;
+        }
+
+        let prompt = `${getAnalysisPrompt(isUrl ? "url" : "text", level, useTools)}\n\nINPUT PAYLOAD:\n${payload}`;
         
         if (!useTools && isUrl) {
           prompt = `CRITICAL NOTICE: Search capabilities are CURRENTLY UNAVAILABLE due to system quota limits. You MUST perform this forensic audit using only your internal knowledge base. Do not attempt to use tools.\n\n${prompt}`;

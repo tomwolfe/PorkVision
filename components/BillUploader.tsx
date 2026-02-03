@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Upload, Link as LinkIcon, FileText, Search } from "lucide-react";
 
 interface BillUploaderProps {
-  onAnalyze: (content: string) => void;
+  onAnalyze: (content: string, comparisonContent?: string) => void;
   isAnalyzing: boolean;
   hasApiKey: boolean;
 }
@@ -12,10 +12,12 @@ interface BillUploaderProps {
 export default function BillUploader({ onAnalyze, isAnalyzing, hasApiKey }: BillUploaderProps) {
   const [inputType, setInputType] = useState<"url" | "text">("url");
   const [value, setValue] = useState("");
+  const [comparisonValue, setComparisonValue] = useState("");
+  const [isComparisonMode, setIsComparisonMode] = useState(false);
 
   const handleSubmit = () => {
     if (!value.trim() || !hasApiKey) return;
-    onAnalyze(value);
+    onAnalyze(value, isComparisonMode ? comparisonValue : undefined);
   };
 
   return (
@@ -25,9 +27,19 @@ export default function BillUploader({ onAnalyze, isAnalyzing, hasApiKey }: Bill
           <h2 className="text-2xl font-black uppercase tracking-tighter text-white">
             Legislation Ingestor
           </h2>
-          <p className="text-zinc-500 text-xs font-mono uppercase">
-            Status: {hasApiKey ? "Ready for deployment" : "Connection Offline"}
-          </p>
+          <div className="flex items-center gap-4 mt-1">
+            <p className="text-zinc-500 text-[10px] font-mono uppercase">
+              Status: {hasApiKey ? "Ready for deployment" : "Connection Offline"}
+            </p>
+            <button 
+              onClick={() => setIsComparisonMode(!isComparisonMode)}
+              className={`text-[10px] font-black uppercase px-2 py-0.5 rounded border transition-colors ${
+                isComparisonMode ? "bg-red-600 border-red-600 text-white" : "border-zinc-800 text-zinc-600 hover:text-zinc-400"
+              }`}
+            >
+              {isComparisonMode ? "Comparison Mode: ON" : "Add Comparison Version"}
+            </button>
+          </div>
         </div>
         <div className="flex bg-black p-1 rounded border border-zinc-800">
           <button
@@ -50,25 +62,55 @@ export default function BillUploader({ onAnalyze, isAnalyzing, hasApiKey }: Bill
       </div>
 
       <div className="space-y-6">
-        {inputType === "url" ? (
-          <div className="relative">
-            <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={20} />
-            <input
-              type="url"
-              value={value}
-              onChange={(e) => setValue(e.target.value)}
-              placeholder="HTTPS://WWW.CONGRESS.GOV/BILL/..."
-              className="w-full bg-black border border-zinc-800 focus:border-red-600 outline-none p-4 pl-12 text-zinc-100 font-mono transition-all rounded"
-            />
+        <div className={`grid gap-6 ${isComparisonMode ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1"}`}>
+          <div className="space-y-2">
+            {isComparisonMode && <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest ml-1">Current Version</label>}
+            {inputType === "url" ? (
+              <div className="relative">
+                <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={20} />
+                <input
+                  type="url"
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  placeholder="HTTPS://WWW.CONGRESS.GOV/BILL/..."
+                  className="w-full bg-black border border-zinc-800 focus:border-red-600 outline-none p-4 pl-12 text-zinc-100 font-mono transition-all rounded"
+                />
+              </div>
+            ) : (
+              <textarea
+                value={value}
+                onChange={(e) => setValue(e.target.value)}
+                placeholder="PASTE FULL LEGISLATION TEXT HERE..."
+                className={`w-full bg-black border border-zinc-800 focus:border-red-600 outline-none p-4 text-zinc-100 font-mono transition-all rounded resize-none ${isComparisonMode ? "h-96" : "h-64"}`}
+              />
+            )}
           </div>
-        ) : (
-          <textarea
-            value={value}
-            onChange={(e) => setValue(e.target.value)}
-            placeholder="PASTE FULL LEGISLATION TEXT HERE..."
-            className="w-full h-64 bg-black border border-zinc-800 focus:border-red-600 outline-none p-4 text-zinc-100 font-mono transition-all rounded resize-none"
-          />
-        )}
+
+          {isComparisonMode && (
+            <div className="space-y-2">
+              <label className="text-[10px] font-black uppercase text-zinc-500 tracking-widest ml-1">Comparison Version</label>
+              {inputType === "url" ? (
+                <div className="relative">
+                  <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-600" size={20} />
+                  <input
+                    type="url"
+                    value={comparisonValue}
+                    onChange={(e) => setComparisonValue(e.target.value)}
+                    placeholder="HTTPS://WWW.CONGRESS.GOV/BILL/PREVIOUS/..."
+                    className="w-full bg-black border border-zinc-800 focus:border-red-600 outline-none p-4 pl-12 text-zinc-100 font-mono transition-all rounded"
+                  />
+                </div>
+              ) : (
+                <textarea
+                  value={comparisonValue}
+                  onChange={(e) => setComparisonValue(e.target.value)}
+                  placeholder="PASTE PREVIOUS LEGISLATION TEXT HERE..."
+                  className={`w-full bg-black border border-zinc-800 focus:border-red-600 outline-none p-4 text-zinc-100 font-mono transition-all rounded resize-none ${isComparisonMode ? "h-96" : "h-64"}`}
+                />
+              )}
+            </div>
+          )}
+        </div>
 
         <div className="space-y-3">
           <button

@@ -11,6 +11,7 @@ export default function Home() {
   const { analyze, isAnalyzing, result, error } = useGemini();
   const [showKeyInput, setShowKeyInput] = useState(false);
   const [hasApiKey, setHasApiKey] = useState(false);
+  const [level, setLevel] = useState<'local' | 'state'>('local');
 
   const checkApiKey = useCallback(() => {
     const key = localStorage.getItem("gemini_api_key");
@@ -20,6 +21,10 @@ export default function Home() {
   useEffect(() => {
     checkApiKey();
   }, [checkApiKey]);
+
+  const handleAnalyze = (content: string, comparisonContent?: string) => {
+    analyze(content, comparisonContent, level);
+  };
 
   return (
     <main className="min-h-screen bg-black text-zinc-100 selection:bg-red-500/30">
@@ -41,11 +46,20 @@ export default function Home() {
           </div>
 
           <div className="flex items-center gap-6">
-            <nav className="hidden md:flex items-center gap-6 text-[10px] font-bold uppercase tracking-widest text-zinc-500">
-              <a href="#" className="hover:text-white transition-colors">Active Audits</a>
-              <a href="#" className="hover:text-white transition-colors">Forensic database</a>
-              <a href="#" className="hover:text-white transition-colors">Documentation</a>
-            </nav>
+            <div className="hidden md:flex items-center gap-2 bg-black border border-zinc-800 p-1 rounded">
+              <button 
+                onClick={() => setLevel('local')}
+                className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded ${level === 'local' ? 'bg-zinc-800 text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
+              >
+                Local / County
+              </button>
+              <button 
+                onClick={() => setLevel('state')}
+                className={`px-3 py-1.5 text-[9px] font-black uppercase tracking-widest transition-all rounded ${level === 'state' ? 'bg-zinc-800 text-white' : 'text-zinc-600 hover:text-zinc-400'}`}
+              >
+                State / Federal
+              </button>
+            </div>
             <button
               onClick={() => setShowKeyInput(!showKeyInput)}
               className="flex items-center gap-2 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 px-4 py-2 rounded text-[10px] font-black uppercase tracking-widest transition-all"
@@ -77,14 +91,14 @@ export default function Home() {
           <section className="text-center space-y-8 py-12">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800 text-[10px] font-black uppercase tracking-[0.2em] text-zinc-500">
               <Terminal size={12} className="animate-pulse text-red-600" />
-              Awaiting Input Payload
+              Awaiting {level.toUpperCase()} Input Payload
             </div>
             <h2 className="text-5xl md:text-7xl font-black uppercase tracking-tighter max-w-4xl mx-auto leading-[0.9]">
               Expose the <span className="text-red-600 italic">Pork</span> in 
               the System.
             </h2>
             <p className="text-zinc-500 max-w-2xl mx-auto text-lg font-medium leading-relaxed">
-              Upload legislation to trigger a forensic audit. Our AI engine cross-references 
+              Upload {level} legislation to trigger a forensic audit. Our AI engine cross-references 
               bill language with lobbyist white papers and donor records using Google Search grounding.
             </p>
           </section>
@@ -93,7 +107,7 @@ export default function Home() {
         <section className={result ? "mt-4" : ""}>
           {!result && (
             <BillUploader 
-              onAnalyze={analyze} 
+              onAnalyze={handleAnalyze} 
               isAnalyzing={isAnalyzing} 
               hasApiKey={hasApiKey}
             />
@@ -108,7 +122,12 @@ export default function Home() {
           {result && (
             <div className="space-y-8">
               <div className="flex items-center justify-between border-b border-zinc-900 pb-6">
-                <h2 className="text-3xl font-black uppercase tracking-tighter">Audit Findings</h2>
+                <div className="flex items-center gap-4">
+                  <h2 className="text-3xl font-black uppercase tracking-tighter">Audit Findings</h2>
+                  <span className="bg-red-600/10 text-red-600 border border-red-600/20 px-2 py-1 rounded text-[10px] font-black uppercase tracking-widest">
+                    {level} Level
+                  </span>
+                </div>
                 <button 
                   onClick={() => window.location.reload()}
                   className="text-xs font-bold uppercase text-zinc-500 hover:text-white transition-colors underline underline-offset-4"
