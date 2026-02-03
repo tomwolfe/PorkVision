@@ -57,7 +57,7 @@ export const SocialProofGenerator: React.FC<SocialProofGeneratorProps> = ({ pork
             PORKVISION AUDIT v3.0
           </text>
           
-          <text x="20" y="80" fill="white" fontFamily="sans-serif" fontSize="24" fontWeight="900" textTransform="uppercase">
+          <text x="20" y="80" fill="white" fontFamily="sans-serif" fontSize="24" fontWeight="900" style={{ textTransform: "uppercase" }}>
             {billName.length > 25 ? billName.substring(0, 22) + "..." : billName}
           </text>
           
